@@ -2,6 +2,7 @@ const canvas = document.querySelector("#canvas");
 const fps = 1000 / 50;
 
 //Functions:
+// Function to render the player's and computer's scores:
 const renderScore = (scorePlayer, scoreComputer) => {
   const playerScore = document.querySelector("#player-score");
   const cpuScore = document.querySelector("#computer-score");
@@ -9,8 +10,10 @@ const renderScore = (scorePlayer, scoreComputer) => {
   cpuScore.innerHTML = `CPU Score: ${scoreComputer}`;
 };
 //Classes:
+// Class for managing the game:
 class Game {
   constructor() {
+    // Initialize game objects:
     this.user = new User();
     this.cpu = new Computer();
     this.ball = new Ball();
@@ -23,22 +26,23 @@ class Game {
   update() {
     //Update the ball's position
     this.ball.updateBall();
-    //Update cpu's paddle
+    //Update the computer's paddle to follow the ball:
     this.cpu.controlPaddle(this.ball);
-    //if the ball hit the bottom or the top of the canvas inverse velocityY of the ball
+    //If the ball hits the top or bottom of the canvas, reverse its vertical velocity:
     if (this.ball.hitBottom() || this.ball.hitTop()) {
       this.ball.velocityY = -this.ball.velocityY;
     }
-
+    // Check if the ball collides with the player's paddle and adjust the ball's direction.
     if (this.user.isCollision(this.ball.x, this.ball.y, this.ball.radius)) {
       this.ball.changeDirection();
       this.ball.increaseSpeed();
     }
+    // Check if the ball collides with the computer's paddle and adjust the ball's direction.
     if (this.cpu.isCollision(this.ball.x, this.ball.y, this.ball.radius)) {
       this.ball.changeDirection();
       this.ball.increaseSpeed();
     }
-
+    // Check if the ball collides with the computer's paddle and adjust the ball's direction.
     const userLost = this.ball.x - this.ball.radius < 0;
     const cpuLost = this.ball.x + this.ball.radius > canvas.width;
 
@@ -54,13 +58,13 @@ class Game {
       this.cpu.increaseLevel(); // If computer lost - make him better
     }
   }
-
+  // Render the game objects on the canvas.
   render() {
     //Clear the previous canvas
     this.board.renderBoard();
     //Render net
     this.net.renderNet();
-    //Render score
+    //Render scores:
     renderScore(this.user.score, this.cpu.score);
     //Render user's and computer's paddles using the board's renderRectangle method:
     //User's paddle:
@@ -82,18 +86,21 @@ class Game {
     //Render the ball:
     this.ball.renderBall();
   }
+  // Main game loop:
   frame() {
     //render everything
     this.update();
     this.render();
   }
+  // Start the game loop
   startGame() {
-    //passing the callback in arrow function to set this keyword correctly (we want this to point to the game class and not to window object). Method loses its original context and the this keyword will not be bound to the instance of theclass
+    //passing the callback in arrow function to set this keyword correctly (we want this to point to the game class and not to window object). Method loses its original context and the this keyword will not be bound to the instance of the class
     this.game = setInterval(() => {
       this.frame();
     }, fps); //We call the frame method 50 times every second
   }
 }
+// Class for managing the game board (canvas):
 class Board {
   constructor() {
     this.context = canvas.getContext("2d");
@@ -103,17 +110,18 @@ class Board {
     this.height = canvas.height;
     this.color = "#302f2f";
   }
-  //Render board and render rectangle are bassicaly the same function so I can merge it into one method
+  //Render board method:
   renderBoard() {
     this.context.fillStyle = this.color;
     this.context.fillRect(this.x, this.y, this.width, this.height);
   }
+  //Render rectangle
   renderRectangle(x, y, width, height, color) {
     this.context.fillStyle = color;
     this.context.fillRect(x, y, width, height);
   }
 }
-
+// Class for managing the player's paddle:
 class User {
   constructor() {
     this.width = 10;
@@ -122,25 +130,19 @@ class User {
     this.y = canvas.height / 2 - this.height / 2;
     this.color = "white";
     this.score = 0;
-    this.top = this.y;
-    this.bottom = this.y + this.height;
-    this.left = this.x;
-    this.right = this.x + this.width;
   }
-
+  // Move the player's paddle based on mouse input:
   movePaddle(e) {
     let rectangle = canvas.getBoundingClientRect(); //the canvas top, right, bottpm and left position is changing every time we scroll
     this.y = e.clientY - rectangle.top - this.height / 2; //y position of the mouse - top position of the canvas = y position of the user's paddle
   }
-
+  // Check for collision between the ball and the player's paddle:
   isCollision(ballX, ballY, ballRadius) {
     const ballLeft = ballX - ballRadius;
     const ballCenter = ballY;
-
     const paddleRight = this.x + this.width;
     const paddleTop = this.y;
     const paddleBottom = this.y + this.height;
-
     if (
       ballLeft > 0 &&
       ballLeft <= paddleRight &&
@@ -149,11 +151,10 @@ class User {
     ) {
       return true;
     }
-
     return false;
   }
 }
-
+// Class for managing the computer's paddle:
 class Computer {
   constructor() {
     this.width = 10;
@@ -164,11 +165,11 @@ class Computer {
     this.score = 0;
     this.level = 0.3;
   }
-
+  // Increase the computer's level:
   increaseLevel() {
     this.level += 0.1;
   }
-
+  // Decrease the computer's level
   decreaseLevel() {
     if (this.level < 0.2) {
       return;
@@ -176,11 +177,11 @@ class Computer {
 
     this.level -= 0.1;
   }
-
+  // Control the computer's paddle to follow the ball:
   controlPaddle(ball) {
     this.y += (ball.y - (this.y + this.height / 2)) * this.level; // increment this y position of the cpu's paddle by the difference between y positon of the ball and center of cpu's paddle (center of the paddle will be the same ass y position of the ball)
   }
-
+  // Check for collision between the ball and the computer's paddle:
   isCollision(ballX, ballY, ballRadius) {
     const ballRight = ballX + ballRadius;
 
@@ -203,6 +204,7 @@ class Computer {
   }
 }
 
+// Class for managing the game ball:
 class Ball {
   constructor() {
     this.x = canvas.width / 2;
@@ -220,11 +222,11 @@ class Ball {
     game.board.context.closePath(); //close the path
     game.board.context.fill(); //fill the shape
   }
-
+  //Change direction of the ball by reversing its velocity
   changeDirection() {
     this.velocityX = -this.velocityX;
   }
-  //Method resetBall will reset the ball's position and velocity
+  //Reset the ball's position and velocity
   resetBall() {
     this.x = canvas.width / 2;
     this.y = canvas.height / 2;
